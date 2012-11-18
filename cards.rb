@@ -173,8 +173,8 @@ module Cards
       # pick a random spot in the middle third of the deck
       # and split the deck there
       #
-      third = num_cards/3
-      split_at = third + rand(third)
+      third = (num_cards/3.0).floor
+      split_at = third + rand(third+1)
       @cards = @cards.slice(split_at..-1) + @cards.slice(0,split_at)
     end
 
@@ -182,7 +182,7 @@ module Cards
       destination.add(remove(num_cards, direction))
     end
 
-    def deal_hand(how_many=1, direction=Card::FACE_DOWN)
+    def deal_cards(how_many=1, direction=Card::FACE_DOWN)
       #
       # create a new Cards object using how_many from this set
       #
@@ -260,9 +260,10 @@ module Cards
     def deal_hands(num_hands, how_many_cards, direction=Card::FACE_DOWN)
       #
       # create Hands from this deck, dealing one card out at a time to each Hand
+      # (remember to call Cards#fold on each hand to return them to this Deck)
       #
       hands=[]
-      num_hands.times {hands << deal_hand(1, direction)}
+      num_hands.times {hands << deal_cards(1, direction)}
       (how_many_cards-1).times do
         hands.each do |hand|
           deal(hand, 1, direction)

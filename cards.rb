@@ -145,6 +145,8 @@ module Cards
     #
     include Enumerable
 
+    DFLT_MAX_CARDS_PRINTED_PER_LINE=7
+
     attr_reader :cards
     attr_reader :card_source
 
@@ -229,11 +231,12 @@ module Cards
       end
     end
 
-    def print
+    def print(max_per_line=DFLT_MAX_CARDS_PRINTED_PER_LINE)
       sep = "  "
-      row = ""
-      Card::NUM_PRINT_ROWS.times do |i|
-        puts @cards.map {|card| card.print_row(i)}.join(sep)
+      @cards.each_slice(max_per_line) do |set|
+        Card::NUM_PRINT_ROWS.times do |i|
+          puts set.map {|card| card.print_row(i)}.join(sep)
+        end
       end
       nil
     end

@@ -92,6 +92,14 @@ module Cards
       to_s
     end
 
+    def up
+      @facing = FACE_UP
+    end
+
+    def down
+      @facing = FACE_DOWN
+    end
+
     def print_row(n)
       case n
         when 0
@@ -135,6 +143,8 @@ module Cards
     #                C A R D S
     # ========================================
     #
+    include Enumerable
+
     attr_reader :cards
     attr_reader :card_source
 
@@ -166,11 +176,11 @@ module Cards
       @cards = @cards.slice(split_at..-1) + @cards.slice(0,split_at)
     end
 
-    def transfer(destination, num_cards, direction=Card::FACE_DOWN)
+    def deal(destination, num_cards, direction=Card::FACE_DOWN)
       destination.add(remove(num_cards, direction))
     end
 
-    def deal(how_many=1, direction=Card::FACE_DOWN)
+    def deal_hand(how_many=1, direction=Card::FACE_DOWN)
       #
       # create a new Cards object using how_many from this set
       #
@@ -181,7 +191,7 @@ module Cards
       #
       # return @cards to the @card_source
       #
-      transfer(@card_source, num_cards, direction)
+      deal(@card_source, num_cards, direction)
     end
 
     def add(cards)
@@ -213,6 +223,12 @@ module Cards
       @cards[index]
     end
 
+    def each
+      @cards.each do |card|
+        yield card
+      end
+    end
+
     def print
       sep = "  "
       row = ""
@@ -229,6 +245,9 @@ module Cards
     #               D E C K
     # ========================================
     #
+
+    attr_accessor   :wildcard
+
     def initialize(num_decks=1, direction=Card::FACE_DOWN)
       cards = []
       num_decks.times {cards += Card.all(direction)}
@@ -240,13 +259,17 @@ module Cards
       # create Hands from this deck, dealing one card out at a time to each Hand
       #
       hands=[]
-      num_hands.times {hands << deal(1, direction)}
+      num_hands.times {hands << deal_hand(1, direction)}
       (how_many_cards-1).times do
         hands.each do |hand|
-          transfer(hand, 1, direction)
+          deal(hand, 1, direction)
         end
       end
       hands
+    end
+
+    def wild?(card)
+      card.face == @wild
     end
   end
 

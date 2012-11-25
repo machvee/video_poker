@@ -36,6 +36,23 @@ module VideoPoker
     Hands::NO_HAND              =>   0
   }
 
+  DESCRIPTIONS = {
+    Hands::NATURAL_ROYAL_FLUSH  => "NATURAL_ROYAL_FLUSH",
+    Hands::FOUR_WILDCARDS_W_ACE => "FOUR_WILDCARDS_W_ACE",
+    Hands::FOUR_WILDCARDS       => "FOUR_WILDCARDS",
+    Hands::FIVE_KIND_ACES       => "FIVE_KIND_ACES",
+    Hands::FIVE_KIND_3_5        => "FIVE_KIND_3_5",
+    Hands::WILD_ROYAL_FLUSH     => "WILD_ROYAL_FLUSH",
+    Hands::FIVE_KIND_6_K        => "FIVE_KIND_6_K",
+    Hands::STRAIGHT_FLUSH       => "STRAIGHT_FLUSH",
+    Hands::FOUR_KIND            => "FOUR_KIND",
+    Hands::FULL_HOUSE           => "FULL_HOUSE",
+    Hands::FLUSH                => "FLUSH",
+    Hands::STRAIGHT             => "STRAIGHT",
+    Hands::THREE_KIND           => "THREE_KIND",
+    Hands::NO_HAND              => "NO_HAND"
+  }
+
   class Game
     include Cards
 
@@ -97,6 +114,11 @@ module VideoPoker
       return Hands::STRAIGHT if is_straight?
       return Hands::THREE_KIND if is_three_kind?
       return Hands::NO_HAND
+    end
+
+    def describe(hand)
+      d = DESCRIPTIONS[e=evaluate(hand)]
+      "#{hand} is a #{d} and pays #{PAYOUTS[e]} multiple"
     end
 
     def is_natural_royal_flush?

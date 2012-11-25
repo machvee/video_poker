@@ -71,6 +71,9 @@ module VideoPoker
 
   class HandEvaluator
     include Cards
+
+    attr_accessor :hand
+
     # 
     # determine the highest poker hand and return the Module Hands value, or NO_HAND
     #
@@ -108,21 +111,21 @@ module VideoPoker
       has_four_wildcards?
     end
 
-    def is_five_kind_aces?
-      is_four_of?(Card::ACE) && has_wildcard?
-    end
-
     def is_five_kind_3_5?
       is_five_kind?(*Card::FACES[1,3])
+    end
+
+    def is_five_kind_6_K?
+      is_five_kind?(*Card::FACES[4,8])
+    end
+
+    def is_five_kind_aces?
+      is_five_kind?(Card::ACE)
     end
 
     def is_wild_royal_flush?
       not_wild = cards_not_wild
       has_wildcard? && all_same_suit?(not_wild) && not_wild.all? {|card| royal_faces.include?(card.face)}
-    end
-
-    def is_five_kind_6_K?
-      is_five_kind?(*Card::FACES[4,8])
     end
 
     def is_straight_flush?
@@ -150,9 +153,7 @@ module VideoPoker
       end
       if c1 == 2
         # C1 C1  W C2 C2 or C2 C2  W C1 C1
-        # C1  W  W C2 C2
         return true if c2 == 2 && num_wild == 1
-        return true if c2 == 1 && num_wild == 2
       end
       false
     end
@@ -176,6 +177,7 @@ module VideoPoker
       # find the highest consec number of same-faced non-wild cards,
       # and try to add in wilds to make n-of a kind
       freq = face_freq(not_wild)
+      #puts "wild #{wild}, not_wild #{not_wild}, consec #{consec}, freq #{freq.inspect}"
       return freq.first[1] >= consec
     end
 
@@ -184,11 +186,10 @@ module VideoPoker
       prev = nil
       not_wild.face_sort.each do |card|
         unless prev.nil?
-          unless consecutive_faces?(prev, card)
-            wild_used += 1
-            if (wild_used > wild.length)
-              return false
-            end
+          delta = face_delta(prev, card)
+          wild_used += (delta-1) # consecutive cards will not increment wild_used
+          if (wild_used > wild.length)
+            return false
           end
         end
         prev = card
@@ -196,16 +197,16 @@ module VideoPoker
       true
     end
 
-    def consecutive_faces?(card1, card2)
-      Card::FACES.index(card2) - Card::FACES.index(card1) == 1
+    def face_delta(card1, card2)
+      (Card::FACES.index(card2.face) - Card::FACES.index(card1.face)).abs
     end
 
     def cards_not_wild
-      @hand.reject {|c| @deck.wild?(c)} YOU ARE HERE... needs Cards object returned
+      Cards.new @deck, @hand.reject {|c| @deck.wild?(c)}
     end
 
     def cards_wild
-      @hand.select {|c| @deck.wild?(c)} YOU ARE HERE... needs Cards object returned
+      Cards.new @deck, @hand.select {|c| @deck.wild?(c)}
     end
 
     def face_freq(hand)
@@ -219,7 +220,17 @@ module VideoPoker
     end
 
     def is_five_kind?(*of_these_faces)
-      has_wildcard? && of_these_faces.any? {|face| is_four_of?(face)}
+      #
+      # face x 4 and 1 wild
+      # face x 3 and 2 wild
+      # face x 2 and 3 wild
+      #
+      num_wild = cards_wild.length
+      of_these_faces.each do |face|
+        cnt = face_count(face)
+        return true if [4,3,2].include?(cnt) && (cnt + num_wild == 5)
+      end
+      false
     end
 
     def is_four_of?(face)
@@ -236,7 +247,11 @@ module VideoPoker
     end
 
     def has_count_of?(count, face)
-      @hand.select {|c| c.face == face}.length == count
+      face_count(face) == count
+    end
+
+    def face_count(face)
+      @hand.select {|c| c.face == face}.length
     end
 
     def has_ace?

@@ -192,7 +192,7 @@ module Cards
       # pick a random spot in the middle third of the deck
       # and split the deck there
       #
-      third = (num_cards/3.0).floor
+      third = (length/3.0).floor
       split_at = third + rand(third+1)
       @cards = @cards.slice(split_at..-1) + @cards.slice(0,split_at)
     end
@@ -212,7 +212,7 @@ module Cards
       #
       # return @cards to the @card_source
       #
-      deal(@card_source, num_cards, direction)
+      deal(@card_source, length, direction)
     end
 
     def add(cards)
@@ -220,7 +220,7 @@ module Cards
     end
 
     def remove(how_many, direction)
-      raise "too few cards remaining" if how_many > num_cards
+      raise "too few cards remaining" if how_many > length
       @cards.slice!(0, how_many).each {|c| c.facing(direction)}
     end
 
@@ -232,12 +232,12 @@ module Cards
       @cards.sort {|a,b| Card::FACES.index(a.face) <=> Card::FACES.index(b.face)}
     end
 
-    def num_cards
+    def length
       @cards.length
     end
 
     def to_s
-      @cards.map &:to_s
+      inspect
     end
 
     def inspect
@@ -296,7 +296,7 @@ module Cards
     end
 
     def wild?(card)
-      card.face == @wild
+      card.face == @wildcard
     end
   end
 

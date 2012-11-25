@@ -73,6 +73,18 @@ class HandEvalTest
     check("5C 5S 2D 5H 2H", Hands::FIVE_KIND_3_5, "FIVE KIND 3 THRU 5 WITH 2 WILD (5)")
     check("4C 2S 2D 4H 2H", Hands::FIVE_KIND_3_5, "FIVE KIND 3 THRU 5 WITH 3 WILD (4)")
 
+    check("AC AS AD AH 2H", Hands::FIVE_KIND_ACES, "FIVE KIND ACES WITH 1 WILD")
+    check("AC AS 2S AH 2D", Hands::FIVE_KIND_ACES, "FIVE KIND ACES WITH 2 WILD")
+    check("AC 2S 2D AH 2C", Hands::FIVE_KIND_ACES, "FIVE KIND ACES WITH 3 WILD")
+
+    check("2H 2S 2D 3H 2C", Hands::FOUR_WILDCARDS, "FOUR WILD CARDS AND 3")
+    check("2H 2S 2D KH 2C", Hands::FOUR_WILDCARDS, "FOUR WILD CARDS AND K")
+    check("2H 2S 2D 7H 2C", Hands::FOUR_WILDCARDS, "FOUR WILD CARDS AND 7")
+
+    check("2H 2S 2D AH 2C", Hands::FOUR_WILDCARDS_W_ACE, "FOUR WILD CARDS WITH ACE")
+
+    check("10H JH QD KH AH", Hands::STRAIGHT, "STRAIGHT")
+    check("10H JH QH KH AH", Hands::NATURAL_ROYAL_FLUSH, "NATURAL ROYAL FLUSH")
   end
 
   def check(cards, should_be, this_hand)

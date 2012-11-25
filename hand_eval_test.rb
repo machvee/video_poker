@@ -101,3 +101,5 @@ end
 
 he = HandEvalTest.new
 he.run
+puts ""
+puts "ALL test completed successfully"

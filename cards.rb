@@ -155,6 +155,17 @@ module Cards
       @cards = cards
     end
 
+    def self.make(*cards)
+      # usage Cards.make(%w{JC AS 4H 3D 2D})
+      h = []
+      cards.each do |fs|
+        f=fs[0..-2]
+        s=fs[-1..-1]
+        h << Card.new(f,s, Card::FACE_UP)
+      end
+      new(nil, h)
+    end
+
     def shuffle
       @cards.shuffle!
     end
@@ -166,6 +177,14 @@ module Cards
 
     def facing(direction=Card::FACE_DOWN)
       @cards.each {|c| c.facing(direction)}
+    end
+
+    def up
+      facing(Card::FACE_UP)
+    end
+
+    def down
+      facing(Card::FACE_DOWN)
     end
 
     def split
@@ -207,6 +226,10 @@ module Cards
 
     def order
       @cards.sort!
+    end
+
+    def face_sort
+      @cards.sort {|a,b| Card::FACES.index(a.face) <=> Card::FACES.index(b.face)}
     end
 
     def num_cards

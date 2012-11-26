@@ -215,6 +215,17 @@ module Cards
       deal(@card_source, length, direction)
     end
 
+    def discard(offsets)
+      #
+      # remove the cards from this set at the offsets provided
+      #
+      removed=[]
+      offsets.sort.each_with_index do |off,i|
+        removed << @cards.delete_at(off-i)
+      end
+      @card_source.add(removed)
+    end
+
     def add(cards)
       @cards += cards
     end

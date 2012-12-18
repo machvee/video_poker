@@ -63,8 +63,8 @@ module Cards
     FACES=[TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE, TEN, JACK, QUEEN, KING, ACE]
 
 
-    attr_reader :face
-    attr_reader :suit
+    attr_reader   :face
+    attr_reader   :suit
 
     FACE_DOWN=false
     FACE_UP=true

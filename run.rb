@@ -40,6 +40,9 @@ class Run
     hand = @deck.deal_hands(1,5).first
     result = @he.evaluate(hand)
     hand.fold
+    if result == Hands::NO_HAND
+      # redraw all cards except wilds
+    end
     @stats[result] += 1
     result
   end
@@ -56,6 +59,6 @@ class Run
   end
 end
 
-r = Run.new(ARGV[0].to_i)
+r = Run.new((ARGV[0]||"10000").to_i)
 r.go
 r.show_stats

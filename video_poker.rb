@@ -56,21 +56,27 @@ module VideoPoker
   class Game
     include Cards
 
+    OUTPUT_INSET=4 # number of spaces to precede each line of game output
+    NUM_CARDS_HAND=5
+
     attr_reader   :bank
     attr_reader   :name
 
-    def initialize(player_name, buyin)
-      @bank = buyin
-      @name = player_name
+    def initialize
       @deck = Deck.new
       @deck.wildcard = Card::TWO
-      shuffle
       @evaluator = HandEvaluator.new(@deck)
+
+      shuffle
+      welcome
+      play
     end
+
+    private
 
     def play
       #
-      # accept tokens
+      # start: accept_bet or quit
       # shuffle
       # deal poker hand face_up
       # display hand
@@ -78,7 +84,137 @@ module VideoPoker
       # allow user to hold 0 to 5 cards
       # allow user to deal new cards, folding cards not held back to @deck
       # evaluate hands for highest
+      # got back to :start if @bank > 0
       #
+      init_game
+      while true
+        accept_bet
+        shuffle
+        deal_hand
+        evaluate_hand
+        allow_hold
+        deal_again
+        player_outcome
+        reset_game
+      end
+    end
+
+    def welcome
+      @name = ask("What's your name") do |response|
+        raise "you must enter a name" if response.length == 0
+      end
+      puts ""
+      royal_flush = Cards.make(*("10S JS QS KS AS".split(' ')))
+      royal_flush.up
+      royal_flush.print
+      banner_print "hey %s, welcome to video poker" % @name
+    end
+
+    def init_game
+      deal_show_hand_down
+      start_amount = prompt('Deposit Money to Start (in dollars)', ':') do |response| 
+        iresp = response.to_i
+        raise 'You must enter a whole dollar amount' unless iresp > 0 
+        iresp
+      end
+      @bank = start_amount.to_i
+    end
+
+    def deal_show_hand_down
+      @hand = @deck.deal_hands(1, NUM_CARDS_HAND).first
+      @hand.print
+      @hand.fold
+    end
+
+    def deal_hand
+      @hand = @deck.deal_hands(1, NUM_CARDS_HAND).first.up
+      @hand.print
+      gputs "   " + [*1..NUM_CARDS_HAND].join("      ")
+      @hold = ask("Card to Hold") do |response|
+        digits = response.scan(/[0-9]+/).map(&:to_i)
+        digits.scan(', \t').each do |n|
+          raise "Enter only numbers between 1 and #{NUM_CARDS_HAND} separated by space or comma" unless [1..NUM_CARDS_HAND].include?(n)
+        end
+        digits
+      end
+    end
+
+    def accept_bet
+      resp = ask("Make a bet") do |amount|
+        @bet = amount.to_i
+        raise "enter and amount between 1 and #{@bank}" unless @bet > 0 && @bet <= @bank
+        @bet
+      end
+      @bank -= @bet
+    end
+
+    def evaluate_hand
+    end
+
+    def allow_hold
+    end
+
+    def deal_again
+    end
+
+    def player_outcome
+    end
+
+    def reset_game
+    end
+
+    def game_over
+      banner_print "game over"
+      gputs "Returning $#{@bank}.00 to you.  Thanks for playing!" 
+    end
+
+    def ask(question, &block)
+      prompt(question, '?', &block)
+    end
+
+    def prompt(question, sep)
+      formatted_response=''
+      begin
+        response = prompt_user(question + sep + " ")
+        if user_wants_to_quit?(response)
+          game_over
+          exit 0
+        end
+        formatted_response = yield response
+      rescue StandardError => e
+        gputs("\nSorry, #{e.message}.\n\n") 
+        retry
+      end
+      formatted_response
+    end
+
+    def prompt_user(prompt)
+      Readline.readline(prompt, true)
+    end
+
+    def banner_print(message)
+      banner_message = "=== %s ===" % message.upcase
+      banner = ("=" * banner_message.length)
+
+      puts ""
+      gputs banner
+      gputs banner_message
+      gputs banner
+      puts ""
+    end
+
+    def gputs(output)
+      puts "%s%s" % [(' ' * OUTPUT_INSET), output]
+    end
+
+    private
+
+    def user_wants_to_quit?(line)
+      if line =~ /^[Qq](uit)*$/
+        resp = prompt_user("Really quit (y or n)? ")
+        return true if resp =~ /^[Yy](es)*/
+      end
+      false
     end
 
     def shuffle
@@ -88,6 +224,8 @@ module VideoPoker
 
   class HandEvaluator
     include Cards
+
+    ROYAL_FACES= [Card::TEN, Card::JACK, Card::QUEEN, Card::KING, Card::ACE]
 
     attr_accessor :hand
 
@@ -122,7 +260,7 @@ module VideoPoker
     end
 
     def is_natural_royal_flush?
-      all_same_suit?(@hand) && @hand.sort.map(&:face) == %w{10 J Q K A}
+      all_same_suit?(@hand) && @hand.sort.map(&:face) == ROYAL_FACES
     end
 
     def is_four_wildcards_with_ace?
@@ -147,7 +285,7 @@ module VideoPoker
 
     def is_wild_royal_flush?
       not_wild = cards_not_wild
-      has_wildcard? && all_same_suit?(not_wild) && not_wild.all? {|card| royal_faces.include?(card.face)}
+      has_wildcard? && all_same_suit?(not_wild) && not_wild.all? {|card| ROYAL_FACES.include?(card.face)}
     end
 
     def is_straight_flush?
@@ -282,10 +420,6 @@ module VideoPoker
 
     def has_wildcard?
       @hand.any? {|c| @deck.wild?(c)}
-    end
-
-    def royal_faces
-      [Card::TEN, Card::JACK, Card::QUEEN, Card::KING, Card::ACE]
     end
   end
 end

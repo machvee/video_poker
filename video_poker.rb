@@ -67,7 +67,6 @@ module VideoPoker
       @deck.wildcard = Card::TWO
       @evaluator = HandEvaluator.new(@deck)
 
-      shuffle
       welcome
       play
     end
@@ -91,23 +90,26 @@ module VideoPoker
         accept_bet
         shuffle
         deal_hand
-        evaluate_hand
-        allow_hold
-        deal_again
+        prompt_for_holds
+        deal_after_holds
         player_outcome
         reset_game
       end
     end
 
     def welcome
-      @name = ask("What's your name") do |response|
-        raise "you must enter a name" if response.length == 0
-      end
       puts ""
+      banner_print "video poker   video poker   video poker" % @name
       royal_flush = Cards.make(*("10S JS QS KS AS".split(' ')))
       royal_flush.up
       royal_flush.print
-      banner_print "hey %s, welcome to video poker" % @name
+      banner_print "video poker   video poker   video poker" % @name
+      puts ""
+      @name = ask("What's your name") do |response|
+        raise "You must enter a name" if response.length == 0
+        response
+      end
+      banner_print "hey %s, welcome!" % @name
     end
 
     def init_game
@@ -121,26 +123,39 @@ module VideoPoker
     end
 
     def deal_show_hand_down
-      @hand = @deck.deal_hands(1, NUM_CARDS_HAND).first
+      @hand = @deck.deal_hands(1, NUM_CARDS_HAND).first.down
       @hand.print
       @hand.fold
     end
 
     def deal_hand
       @hand = @deck.deal_hands(1, NUM_CARDS_HAND).first.up
+      show_hand
+    end
+
+    def show_hand
+      gputs ""
+      gputs "Bet: $%d.00                Bank: $%d.00" % [@bet, @bank]
+      @result = @evaluator.evaluate(@hand)
+      gputs "You currently have %s" % DESCRIPTIONS[@result]
       @hand.print
-      gputs "   " + [*1..NUM_CARDS_HAND].join("      ")
-      @hold = ask("Card to Hold") do |response|
+      gputs [*1..NUM_CARDS_HAND].join("          ")
+    end
+
+    def prompt_for_holds
+      range = 1..NUM_CARDS_HAND
+      @holds = ask("Cards to Hold") do |response|
         digits = response.scan(/[0-9]+/).map(&:to_i)
-        digits.scan(', \t').each do |n|
-          raise "Enter only numbers between 1 and #{NUM_CARDS_HAND} separated by space or comma" unless [1..NUM_CARDS_HAND].include?(n)
+        digits.each do |n|
+          raise "Enter only numbers between 1 and #{NUM_CARDS_HAND} separated by space or comma" unless range.include?(n)
         end
         digits
       end
+      @discards = ([*range] - @holds).map {|n| n - 1}
     end
 
     def accept_bet
-      resp = ask("Make a bet") do |amount|
+      resp = ask("Make a bet (up to $%d.00)" % @bank) do |amount|
         @bet = amount.to_i
         raise "enter and amount between 1 and #{@bank}" unless @bet > 0 && @bet <= @bank
         @bet
@@ -148,13 +163,10 @@ module VideoPoker
       @bank -= @bet
     end
 
-    def evaluate_hand
-    end
-
-    def allow_hold
-    end
-
-    def deal_again
+    def deal_after_holds
+      @hand.discard(@discards)
+      @deck.deal_at(@hand, @discards, Card::FACE_UP)
+      show_hand
     end
 
     def player_outcome
@@ -347,6 +359,7 @@ module VideoPoker
       not_wild.face_sort.each do |card|
         unless prev.nil?
           delta = face_delta(prev, card)
+          return false if delta == 0 # same FACE in hand means straight impossible
           wild_used += (delta-1) # consecutive cards will not increment wild_used
           if (wild_used > wild.length)
             return false
@@ -423,3 +436,6 @@ module VideoPoker
     end
   end
 end
+
+game = VideoPoker::Game.new
+game.play

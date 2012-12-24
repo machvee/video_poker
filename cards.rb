@@ -94,10 +94,12 @@ module Cards
 
     def up
       @facing = FACE_UP
+      self
     end
 
     def down
       @facing = FACE_DOWN
+      self
     end
 
     def print_row(n)
@@ -172,11 +174,11 @@ module Cards
 
     def shuffle_up(num_times=1)
       num_times.times {shuffle; split}
-      @cards
     end
 
     def facing(direction=Card::FACE_DOWN)
       @cards.each {|c| c.facing(direction)}
+      self
     end
 
     def up
@@ -195,10 +197,15 @@ module Cards
       third = (length/3.0).floor
       split_at = third + rand(third+1)
       @cards = @cards.slice(split_at..-1) + @cards.slice(0,split_at)
+      self
     end
 
     def deal(destination, num_cards, direction=Card::FACE_DOWN)
       destination.add(remove(num_cards, direction))
+    end
+
+    def deal_at(destination, offsets, direction=Card::FACE_DOWN)
+      offsets.each {|off| destination.insert(off, remove(1, direction).first)}
     end
 
     def deal_cards(how_many=1, direction=Card::FACE_DOWN)
@@ -233,6 +240,10 @@ module Cards
     def remove(how_many, direction)
       raise "too few cards remaining" if how_many > length
       @cards.slice!(0, how_many).each {|c| c.facing(direction)}
+    end
+
+    def insert(offset, card)
+      @cards.insert(offset, card)
     end
 
     def order

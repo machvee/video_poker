@@ -32,6 +32,7 @@ class HandEvalTest
 
     check("JS AC 4D 8H 2D", Hands::NO_HAND, "NO HAND")
     check("2H 4H 6D 8H 10H", Hands::NO_HAND, "NO HAND")
+    check("10H 10D 8D 9H QH", Hands::NO_HAND, "NO HAND")
 
     check("JS JC JD 8H 4D", Hands::THREE_KIND, "NATURAL THREE_KIND")
     check("JS JC 2D 8H 4D", Hands::THREE_KIND, "THREE_KIND WITH 1 WILD")

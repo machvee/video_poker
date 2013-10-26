@@ -53,6 +53,8 @@ module VideoPoker
     Hands::NO_HAND              => "NO_HAND"
   }
 
+  MAX_UNITS = 5 # player can bet up to this many of the chosen @bet
+
   class Game
     include Cards
 
@@ -66,6 +68,7 @@ module VideoPoker
       @deck = Deck.new
       @deck.wildcard = Card::TWO
       @evaluator = HandEvaluator.new(@deck)
+      @max_units = MAX_UNITS
 
       welcome
       play
@@ -114,12 +117,12 @@ module VideoPoker
 
     def init_game
       deal_show_hand_down
-      start_amount = prompt('Deposit Money to Start (in dollars)', ':') do |response| 
+      @bank = prompt('Deposit Money to Start (in dollars)', ':') do |response| 
         iresp = response.to_i
         raise 'You must enter a whole dollar amount' unless iresp > 0 
         iresp
       end
-      @bank = start_amount.to_i
+      @unit = choice("Bet Unit?", "$%d.00", [1, 2, 5])
     end
 
     def deal_show_hand_down
@@ -155,10 +158,11 @@ module VideoPoker
     end
 
     def accept_bet
-      resp = ask("Make a bet (up to $%d.00)" % @bank) do |amount|
-        @bet = amount.to_i
-        raise "enter and amount between 1 and #{@bank}" unless @bet > 0 && @bet <= @bank
-        @bet
+      max_units = [@bank/@unit, @max_units].min
+      @bet = ask("Bet (1-#{max_units})") do |amount|
+        iresp = amount.to_i
+        raise "enter and amount between 1 and #{max_units}" unless iresp >= 1 && iresp <= max_units
+        iresp
       end
       @bank -= @bet
     end
@@ -178,6 +182,20 @@ module VideoPoker
     def game_over
       banner_print "game over"
       gputs "Returning $#{@bank}.00 to you.  Thanks for playing!" 
+    end
+
+    def choice(msg, formatter, options)
+      len = options.length
+      outbuf = msg + "\n"
+      options.each_with_index do |o,i|
+         outbuf << "  #{i+1}.  #{formatter}\n" % o
+      end
+      selection = prompt(outbuf, '>') do |resp|
+        iresp = resp.to_i
+        raise "you must choose 1 - #{len}" unless (1..len).include? iresp
+        iresp
+      end
+      options[selection-1]
     end
 
     def ask(question, &block)
@@ -436,6 +454,3 @@ module VideoPoker
     end
   end
 end
-
-game = VideoPoker::Game.new
-game.play

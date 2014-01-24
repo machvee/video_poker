@@ -131,7 +131,7 @@ module Cards
       a = []
       SUITS.each do |s|
         FACES.each do |f|
-          a << Card.new(f, s, direction)
+          a << new(f, s, direction)
         end
       end
       a
